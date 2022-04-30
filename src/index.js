@@ -24,7 +24,7 @@ class Board extends Component {
   render() {
     // React tutorial challenge 3
     // Rewrite Board to use two loops to make the squares instead of hardcoding them.
-    
+
     // start indexes of each row
     const arr = [0, 3, 6];
 
@@ -48,7 +48,8 @@ class Game extends Component {
         } 
       }],
       stepNumber: 0,
-      xIsNext: true
+      xIsNext: true,
+      isHistoryReversed: false
     };
   }
 
@@ -102,11 +103,24 @@ class Game extends Component {
 
       return (
         <li key={move}>
-          <button className={isSelected? 'selected-move': ''} onClick={() => this.jumpTo(move)}>{desc}</button>
-          <span className="position">{position}</span>
+          <button className={isSelected? 'move-btn selected-move': 'move-btn'} onClick={() => this.jumpTo(move)}>{desc}</button>
+          {position ? 
+          <span className="position">{position}</span> : 
+          <button className="move-btn" onClick={
+            () => this.setState({isHistoryReversed: !this.state.isHistoryReversed})
+          }>History: {this.state.isHistoryReversed ? 'desc' : 'asc'}</button>}
         </li>
       );
     });
+
+    // React tutorial challenge 4
+    // Add a toggle button that lets you sort the moves in either ascending or descending order.
+    if(this.state.isHistoryReversed) {
+      // This is a simple solution.
+      // I was messing with map function for around 2 hours.
+      moves.reverse();
+      moves.unshift(moves.pop());
+    }
 
     let status;
 
