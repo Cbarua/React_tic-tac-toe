@@ -1,4 +1,4 @@
-import React from "react";
+import { Component } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 
@@ -10,10 +10,11 @@ function Square(props) {
   );
 }
 
-class Board extends React.Component {
+class Board extends Component {
   renderSquare(i) {
     return (
       <Square
+        key={i}
         value={this.props.squares[i]}
         onClick={() => this.props.onClick(i)}
       />
@@ -21,29 +22,21 @@ class Board extends React.Component {
   }
 
   render() {
+    // React tutorial challenge 3
+    // Rewrite Board to use two loops to make the squares instead of hardcoding them.
+    
+    // start indexes of each row
+    const arr = [0, 3, 6];
+
     return (
       <div>
-        <div className="board-row">
-          {this.renderSquare(0)}
-          {this.renderSquare(1)}
-          {this.renderSquare(2)}
-        </div>
-        <div className="board-row">
-          {this.renderSquare(3)}
-          {this.renderSquare(4)}
-          {this.renderSquare(5)}
-        </div>
-        <div className="board-row">
-          {this.renderSquare(6)}
-          {this.renderSquare(7)}
-          {this.renderSquare(8)}
-        </div>
+        {arr.map((a, b) => <div key={b} className="board-row">{arr.map((x, y) => this.renderSquare(a+y))}</div>)}
       </div>
     );
   }
 }
 
-class Game extends React.Component {
+class Game extends Component {
   constructor(props) {
     super(props);
     this.state = {
