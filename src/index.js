@@ -103,9 +103,13 @@ class Game extends React.Component {
       const {row, col} = step.lastPosition;
       const position = row ? `row: ${row} col: ${col}` : null;
 
+      // React tutorial challenge 2
+      // Bold the currently selected item in the move list.
+      const isSelected = move === this.state.stepNumber;
+
       return (
         <li key={move}>
-          <button onClick={() => this.jumpTo(move)}>{desc}</button>
+          <button className={isSelected? 'selected-move': ''} onClick={() => this.jumpTo(move)}>{desc}</button>
           <span className="position">{position}</span>
         </li>
       );
