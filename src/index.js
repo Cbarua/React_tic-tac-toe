@@ -86,7 +86,7 @@ class Game extends Component {
   }
 
   render() {
-    const history = this.state.history;
+    const history = this.state.history.slice();
     const current = history[this.state.stepNumber];
     const winner = calculateWinner(current.squares);
 
@@ -126,9 +126,13 @@ class Game extends Component {
     let status;
 
     if (winner) {
-      status = "Winner: " + winner.winner;
+      status = 'Winner: ' + winner.winner;
     } else {
-      status = "Next player: " + (this.state.xIsNext ? "X" : "O");
+      // React tutorial challenge 6
+      // When no one wins, display a message about the result being a draw.
+      status = history[history.length - 1].squares.includes(null) ? 
+      'Next player: ' + (this.state.xIsNext ? "X" : "O") :
+      'Draw';
     }
     return (
       <div className="game">

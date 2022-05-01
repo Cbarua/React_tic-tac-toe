@@ -4,7 +4,8 @@ body {
 }
 
 ol,
-ul {
+ul,
+.status {
     padding-left: 30px;
 }
 
