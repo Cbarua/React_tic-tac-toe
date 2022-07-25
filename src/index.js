@@ -14,7 +14,7 @@ class Board extends Component {
   renderSquare(i) {
     return (
       <Square
-        key={i}
+        key={i.toString()}
         value={this.props.squares[i]}
         onClick={() => this.props.onClick(i)}
         isWinningBlock={this.props.winningSequence.includes(i)}
@@ -30,11 +30,78 @@ class Board extends Component {
     const arr = [0, 3, 6];
 
     return (
-      <div>
-        {arr.map((a, b) => <div key={b} className="board-row">{arr.map((x, y) => this.renderSquare(a+y))}</div>)}
+      // adding array 1 num to array 2 indexes
+      <div className="game-board">
+        <div>
+          {arr.map((a, b) => <div key={b} className="board-row">{arr.map((x, y) => this.renderSquare(a+y))}</div>)}
+        </div>
       </div>
     );
   }
+}
+
+function MovesList(props) {
+  const { history, stepNumber, isHistoryReversed, toggleHistory, jumpTo } = props;
+
+  const moves = history.map((step, move) => {
+    const desc = move ? "Go to move #" + move : "Go to game start";
+    
+    // React tutorial challenge 1
+    // Display the location for each move in the format (col, row) in the move history list.
+    const {row, col} = step.lastPosition;
+    const position = row ? `row: ${row} col: ${col}` : null;
+
+    // React tutorial challenge 2
+    // Bold the currently selected item in the move list.
+    const isSelected = move === stepNumber;
+
+    return (
+      <li key={move}>
+        <button className={'move-btn' + (isSelected? ' selected-move': '')} onClick={() => {jumpTo(move)}}>{desc}</button>
+        {position ? 
+        <span className="position">{position}</span> : 
+        <button className="move-btn" onClick={toggleHistory}>History: {isHistoryReversed ? 'desc' : 'asc'}</button>}
+      </li>
+    );
+  });
+
+  // React tutorial challenge 4
+  // Add a toggle button that lets you sort the moves in either ascending or descending order.
+  if(isHistoryReversed) {
+    // This is a simple solution.
+    // I was messing with map function for around 2 hours.
+    moves.reverse();
+    // to move the menu buttons to top.
+    moves.unshift(moves.pop());
+  }
+
+  return moves;
+}
+
+function GameInfo({ winner, xIsNext, ...passedAsProps }) {
+  const { history, stepNumber } = passedAsProps;
+
+  let status;
+
+  if (winner) {
+    status = 'Winner: ' + winner.winner;
+  } else {
+    // React tutorial challenge 6
+    // When no one wins, display a message about the result being a draw.
+    // #18
+    status = history[stepNumber].squares.includes(null) ? 
+    'Next player: ' + (xIsNext ? "X" : "O") :
+    'Draw';
+  }
+
+  return (
+    <div className="game-info">
+      <div className="status"> {status} </div>
+      <ol>
+        <MovesList {...passedAsProps} />
+      </ol>
+    </div>
+  )
 }
 
 class Game extends Component {
@@ -52,6 +119,9 @@ class Game extends Component {
       xIsNext: true,
       isHistoryReversed: false
     };
+
+    this.toggleHistory = this.toggleHistory.bind(this);
+    this.jumpTo = this.jumpTo.bind(this);
   }
 
   handleClick(i) {
@@ -66,15 +136,18 @@ class Game extends Component {
 
     squares[i] = this.state.xIsNext ? "X" : "O";
 
-    this.setState({
-      history: history.concat({ 
-        squares, 
-        lastPosition: {
-          row: (Math.floor(i/3))+1, 
-          col: (Math.floor(i%3))+1} 
-        }),
-      stepNumber: history.length,
-      xIsNext: !this.state.xIsNext
+    this.setState(prevState => {
+      return {
+        history: history.concat({ 
+          squares,
+          lastPosition: {
+              row: (Math.floor(i/3))+1,
+              col: (Math.floor(i%3))+1
+            }
+          }),
+        stepNumber: history.length,
+        xIsNext: !prevState.xIsNext
+      }
     });
   }
 
@@ -85,70 +158,34 @@ class Game extends Component {
     })
   }
 
+  toggleHistory() {
+    // Updating state using a function lets us use previous state.
+    this.setState(prevState => ({isHistoryReversed: !prevState.isHistoryReversed}));
+  }
+
   render() {
-    const history = this.state.history.slice();
+    // #13
+    const history = this.state.history.map(({squares, lastPosition}) => 
+      ({
+        squares: squares.slice(),
+        lastPosition: {...lastPosition}
+      }));
     const current = history[this.state.stepNumber];
     const winner = calculateWinner(current.squares);
+    
+    const { toggleHistory, jumpTo } = this;
+    const passedAsProps = {...this.state, history, toggleHistory, jumpTo, winner};
 
-    const moves = history.map((step, move) => {
-      const desc = move ? "Go to move #" + move : "Go to game start";
-      
-      // React tutorial challenge 1
-      // Display the location for each move in the format (col, row) in the move history list.
-      const {row, col} = step.lastPosition;
-      const position = row ? `row: ${row} col: ${col}` : null;
-
-      // React tutorial challenge 2
-      // Bold the currently selected item in the move list.
-      const isSelected = move === this.state.stepNumber;
-
-      return (
-        <li key={move}>
-          <button className={'move-btn' + (isSelected? ' selected-move': '')} onClick={() => this.jumpTo(move)}>{desc}</button>
-          {position ? 
-          <span className="position">{position}</span> : 
-          <button className="move-btn" onClick={
-            () => this.setState({isHistoryReversed: !this.state.isHistoryReversed})
-          }>History: {this.state.isHistoryReversed ? 'desc' : 'asc'}</button>}
-        </li>
-      );
-    });
-
-    // React tutorial challenge 4
-    // Add a toggle button that lets you sort the moves in either ascending or descending order.
-    if(this.state.isHistoryReversed) {
-      // This is a simple solution.
-      // I was messing with map function for around 2 hours.
-      moves.reverse();
-      moves.unshift(moves.pop());
-    }
-
-    let status;
-
-    if (winner) {
-      status = 'Winner: ' + winner.winner;
-    } else {
-      // React tutorial challenge 6
-      // When no one wins, display a message about the result being a draw.
-      status = history[history.length - 1].squares.includes(null) ? 
-      'Next player: ' + (this.state.xIsNext ? "X" : "O") :
-      'Draw';
-    }
     return (
       <div className="game">
-        <div className="game-board">
-          <Board
-            squares={current.squares}
-            onClick={(i) => this.handleClick(i)}
-            // React tutorial challenge 5
-            // When someone wins, highlight the three squares that caused the win.
-            winningSequence={winner ? winner.winningSequence : []}
-          />
-        </div>
-        <div className="game-info">
-          <div className="status"> {status} </div>
-          <ol> {moves} </ol>
-        </div>
+        <Board
+          squares={current.squares}
+          onClick={(i) => this.handleClick(i)}
+          // React tutorial challenge 5
+          // When someone wins, highlight the three squares that caused the win.
+          winningSequence={winner ? winner.winningSequence : []}
+        />
+        <GameInfo {...passedAsProps} />
       </div>
     );
   }

@@ -1,0 +1,157 @@
+2022-05-01
+----------
+#1
+Create an array 0 to n.
+Array.from(Array(10).keys())
+[...Array(10).keys()]
+Array.from({length: 10}, (_, i) => i + 1)
+https://stackoverflow.com/questions/3746725/how-to-create-an-array-containing-1-n
+
+#2
+Reverse an array using 'Array.map()'.
+I needed it to reverse the indexes.
+myArray.map((val, index, array) => array[array.length - 1 - index]);
+Edit 2022-07-24
+Why didn't I do this instead?
+myArray.slice().reverse();
+
+
+2022-05-06
+----------
+#3
+React only updates what's necessary -> https://reactjs.org/docs/rendering-elements.html
+I was wondering how only the time is being updated but not the texts surrounding it.
+Figured out how. React interprets strings enclosed in quotes as text nodes.
+It only updates nodes that have changed.
+// Below example demonstrates the way React does it.
+const h1 = document.createElement("H1");
+document.body.appendChild(h1);
+let i = 0;
+const textNode = document.createTextNode(i++);
+h1.textContent = 'Hello World ';
+h1.appendChild(textNode);
+
+setInterval(()=> {
+    textNode.nodeValue = i++;
+}, 1000);
+
+#4
+Use object.__proto__ to check properties inside the object.
+Object.keys(object) doesn't work in this case.
+
+#5
+onClick={this.toggleHistory()} calls the function on render.
+Clicking the button doesn't call the function anymore.
+What we need is pass the function as reference. onClick={this.toggleHistory}
+https://stackoverflow.com/questions/42178136/when-to-call-function-vs-function-in-react-onclick
+
+#6
+Passing method as a reference to onClick doesn't have 'this'. Got undefined.
+Probably because of strict mode otherwise 'this' may refer to the window object.
+Arrow function works because it doesn't bind 'this'.
+onClick{()=> this.toggleHistory()} works without needing to bind 'this'.
+However, it causes peroformance issues.
+onClick={this.toggleHistory.bind(this)} works too.
+https://reactjs.org/docs/handling-events.html
+
+#7
+React may update state asynchronously.
+Accessing this.state.isHistoryReversed isn't favourable but possible.
+Updating state using a function lets us use previous state.
+Example -> this.setState(prevState => ({isHistoryReversed: !prevState.isHistoryReversed}));
+https://reactjs.org/docs/state-and-lifecycle.html#state-updates-may-be-asynchronous
+
+#8
+The arguments of a function are maintained in an array-like object.
+Within a function, you can access them like arguments[i].
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Functions#using_the_arguments_object
+
+2022-05-07
+----------
+#9
+Use '+' to convert to a number.
+Example -> +new Date
+https://jsbin.com/wohima/edit?js,output
+
+#10
+React doesn't recommend using indexes for keys if the order of items may change.
+This can negatively impact performance and may cause issues with the component state.
+https://reactjs.org/docs/lists-and-keys.html#keys
+https://robinpokorny.medium.com/index-as-a-key-is-an-anti-pattern-e0349aece318
+https://jsbin.com/wohima/edit?js,output
+
+#11
+Deep cloning an object with the JSON method will lose any Javascript types that have no equivalents in JSON.
+Dates, functions, undefined, Infinity, RegExps, Maps, Sets, Blobs, FileLists, ImageDatas, sparse Arrays (array with holes),
+Typed Arrays or other complex types will be lost or forced to null or string.
+https://stackoverflow.com/a/122704
+
+#12
+I needed to pass the Game component state to the GameInfo component.
+Using the JSON method works but seemed inefficient.
+The spread operator was problematic because the history property is an array of objects.
+Until I found that I can update properties in spread syntax.
+https://www.freecodecamp.org/news/javascript-object-destructuring-spread-operator-rest-parameter#update-properties
+
+#13
+Copying Game component state history property using Array.slice() is problematic
+because moves are an array of numbers stored in the square property of an object
+therefore, original state is also mutated.
+I didn't have any problem with the game but I noticed it.
+history[0].squares[0] = 'something';
+history[0].lastPosition.col = 'someString';
+console.log('Original State :', this.state.history);
+console.log('Copied State: ', history);
+Used Array.map() to create the shallow copies of properties because the properties were onedimensional. 
+
+#14
+Methods should be bound explicitly if 'this' was used and passed to a lower component.
+onClick={() => this.jumpTo(move)} worked previously because it was inside an arrow function and in the same component.
+https://reactjs.org/docs/handling-events.html
+
+
+2022-05-08
+----------
+#15
+I checked to see whether Array.map() deep copies elements of an array.
+I tried it with history array returning the square property without Array.slice().
+It doesn't. If an element is an array or object, it is passed by reference.
+
+#16
+I found deep copying history property of the Game component state to be pointless.
+It's an array of objects so Array.slice() into a variable and changing a property doesn't work
+because the objects don't get deep copied. So every time I need to change a property of one of the objects
+and leave the first object intact, I need to use the JSON method.
+* Previous
+const history = this.state.history.map(({squares, lastPosition}) => 
+    ({
+        squares: squares.slice(),
+        lastPosition: {...lastPosition}
+    }));
+* Current solution
+const history = JSON.parse(JSON.stringify(this.state.history));
+
+#17
+I was looking for a way to spread all properties into variables without naming them explicitly.
+const {*} = object like that is not possible.
+There are some ways but they aren't recommended.
+https://stackoverflow.com/questions/31907970/how-do-i-destructure-all-properties-into-the-current-scope-closure-in-es2015
+
+
+2022-07-24
+----------
+#18
+Had found a bug. When the squares are filled then moved back to a previous move,
+the status message says "Draw". It must be corrected to indicate who is next.
+Fixed it today.
+
+2022-07-25
+----------
+#19
+Get indexes of an array. Use Array.keys()
+const arr = ['a', , 'c'];
+const sparseKeys = Object.keys(arr); // ignore holes
+const denseKeys = [...arr.keys()];  // doesn't ignore holes
+console.log(sparseKeys); // ['0', '2']
+console.log(denseKeys);  // [0, 1, 2]
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/keys
